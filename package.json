@@ -1,0 +1,65 @@
+{
+  "name": "ello-crew",
+  "productName": "ello Crew",
+  "version": "0.1.0",
+  "description": "Pool free AI API keys with automatic failover, and put a whole AI company of specialist departments to work on your questions.",
+  "main": "src/main/main.js",
+  "author": "elloexe",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test test/*.test.js",
+    "dist:win": "electron-builder --win --x64 --publish never",
+    "dist:linux": "electron-builder --linux --x64 --publish never",
+    "dist:portable": "electron-builder --win portable --x64 --publish never"
+  },
+  "build": {
+    "appId": "com.elloexe.crew",
+    "productName": "ello Crew",
+    "files": [
+      "src/**/*",
+      "build/icon.png",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png"
+    },
+    "portable": {
+      "artifactName": "ello-Crew-${version}-portable.exe"
+    },
+    "nsis": {
+      "artifactName": "ello-Crew-Setup-${version}.exe",
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "icon": "build/icon.png"
+    }
+  },
+  "devDependencies": {
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8"
+  }
+}

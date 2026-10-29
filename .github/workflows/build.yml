@@ -1,0 +1,54 @@
+name: build
+
+# Tests on every push; builds ello Crew for Windows on a real Windows runner.
+# Every run uploads the .exe files as a build artifact. Manual runs ("Run workflow"
+# on the Actions tab) and vX.Y.Z tags also publish a GitHub Release with them.
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
+  windows:
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build portable .exe and installer
+        run: npm run dist:win
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ello-crew-windows
+          path: |
+            dist/*.exe
+      - name: Publish release
+        if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', '0.1.0') }}
+          name: ello Crew ${{ github.ref_type == 'tag' && github.ref_name || 'v0.1.0' }}
+          target_commitish: ${{ github.sha }}
+          files: dist/*.exe

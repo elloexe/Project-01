@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ello Crew</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo">e</div>
+        <div>
+          <div class="brand-name">ello Crew</div>
+          <div class="brand-sub" id="brand-sub">your free AI company</div>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <button class="nav-item active" data-view="chat"><span class="ico">💬</span> Chat</button>
+        <button class="nav-item" data-view="org"><span class="ico">🏢</span> Org chart</button>
+        <button class="nav-item" data-view="keys"><span class="ico">🔑</span> Keys &amp; models <span class="pill" id="nav-models-count"></span></button>
+        <button class="nav-item" data-view="router"><span class="ico">🔀</span> Router</button>
+        <button class="nav-item" data-view="api"><span class="ico">🔌</span> Local API <span class="dot" id="nav-api-dot"></span></button>
+      </nav>
+
+      <div class="sidebar-section">
+        <div class="sidebar-head">
+          <span>Conversations</span>
+          <button class="icon-btn" id="new-chat" title="New conversation">＋</button>
+        </div>
+        <input class="search" id="conv-search" placeholder="Search…">
+        <div class="conv-list" id="conv-list"></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <!-- CHAT -->
+      <section class="view active" id="view-chat">
+        <header class="chat-header">
+          <div class="chat-title-wrap">
+            <div class="chat-title" id="chat-title">New conversation</div>
+            <div class="chat-mode" id="chat-mode"></div>
+          </div>
+          <div class="chat-tools">
+            <label class="field-inline" title="Which model answers. Auto = best available, with failover.">
+              <span>Model</span>
+              <select id="model-select"></select>
+            </label>
+            <div id="company-tools" class="field-inline-group">
+              <label class="field-inline" title="How many departments may weigh in">
+                <span>Depts</span>
+                <select id="max-depts">
+                  <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+                </select>
+              </label>
+              <label class="toggle" title="An independent reviewer checks the departments' answers before the CEO sums up">
+                <input type="checkbox" id="reviewer-toggle"><span class="track"></span><span>Reviewer</span>
+              </label>
+            </div>
+            <button class="icon-btn" id="export-conv" title="Export as Markdown">⤓</button>
+            <button class="icon-btn" id="delete-conv" title="Delete conversation">🗑</button>
+          </div>
+        </header>
+
+        <div class="messages" id="messages"></div>
+
+        <footer class="composer-wrap">
+          <div class="mode-bar" id="mode-bar">
+            <button class="mode active" data-mode="company">👑 Ask the company</button>
+            <button class="mode" data-mode="department">🏷️ One department</button>
+            <button class="mode" data-mode="plain">💭 Plain chat</button>
+            <select id="dept-select" class="hidden"></select>
+          </div>
+          <div class="composer">
+            <textarea id="input" rows="1" placeholder="Ask your company anything… (Enter to send, Shift+Enter for a new line)"></textarea>
+            <button class="send" id="send-btn" title="Send">➤</button>
+            <button class="stop hidden" id="stop-btn" title="Stop">■</button>
+          </div>
+        </footer>
+      </section>
+
+      <!-- ORG -->
+      <section class="view" id="view-org">
+        <div class="page">
+          <div class="page-head">
+            <h1>Org chart</h1>
+            <p>Sixteen departments with specialist roles. Ask the whole company, or start a conversation with one department or specialist. Structure adapted from <a href="https://github.com/cbrock84/headcount" class="ext">headcount</a>.</p>
+          </div>
+          <div class="ceo-card" id="ceo-card"></div>
+          <div class="org-grid" id="org-grid"></div>
+        </div>
+      </section>
+
+      <!-- KEYS -->
+      <section class="view" id="view-keys">
+        <div class="page">
+          <div class="page-head">
+            <h1>Keys &amp; models</h1>
+            <p>Add free API keys from as many providers as you like. They're pooled: when one hits its limit, the next one takes over. Endpoints follow <a href="https://github.com/tashfeenahmed/freellmapi" class="ext">FreeLLMAPI</a>.</p>
+            <div class="notice" id="enc-notice"></div>
+          </div>
+          <h2>Connected</h2>
+          <div id="connections"></div>
+          <h2>Add a provider</h2>
+          <div class="provider-grid" id="provider-grid"></div>
+        </div>
+      </section>
+
+      <!-- ROUTER -->
+      <section class="view" id="view-router">
+        <div class="page">
+          <div class="page-head row">
+            <div>
+              <h1>Router</h1>
+              <p>Live view of every request, which model answered, and which keys are cooling down after hitting a limit.</p>
+            </div>
+            <button class="btn" id="clear-cooldowns">Clear all cooldowns</button>
+          </div>
+          <div class="stats" id="router-stats"></div>
+          <h2>Auto-route order</h2>
+          <p class="muted small">Pin models (★ on the Keys page) to try them first, in this order. Unpinned models follow, ranked by how capable they are.</p>
+          <div id="pinned-list"></div>
+          <h2>Models</h2>
+          <div class="table-wrap"><table class="data" id="router-models"></table></div>
+          <h2>Recent requests</h2>
+          <div class="table-wrap"><table class="data" id="router-log"></table></div>
+        </div>
+      </section>
+
+      <!-- API -->
+      <section class="view" id="view-api">
+        <div class="page">
+          <div class="page-head">
+            <h1>Local API</h1>
+            <p>Run an OpenAI-compatible endpoint on this PC so other apps (Cursor, Cline, Continue, Aider, Open WebUI, your own scripts) can use your pooled free keys and your company's departments.</p>
+          </div>
+          <div class="card" id="api-card"></div>
+          <h2>Use it from…</h2>
+          <div class="snippets" id="api-snippets"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal hidden" id="modal">
+    <div class="modal-box" id="modal-box"></div>
+  </div>
+  <div class="toasts" id="toasts"></div>
+
+  <script src="markdown.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
